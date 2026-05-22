@@ -4,13 +4,11 @@
 # Avec Python, les class Interfaces peuvent être implémentées comme des classes abstraites
 # heritant de Protocol
 import sqlite3
-from random import randint
-from typing import List, Optional, Protocol
+from typing import Protocol
 
 from Models import EnseignantDTO, EtudiantDTO, UserDTO
 
 
-# Exercice 2
 class DAO:
     def __init__(self, db_path: str = ":memory:"):
         self.conn = sqlite3.connect(db_path, check_same_thread=False)
@@ -23,7 +21,7 @@ class DAO:
         # 1. Création de la table Users sur base de la classe UserDTO
 
         cursor.execute(
-            "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, role TEXT, email TEXT, logedin BOOLEAN)"
+            "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, role TEXT, email TEXT, google_linked BOOLEAN)"
         )
 
         cursor.execute("CREATE TABLE IF NOT EXISTS enseignants (id INTEGER PRIMARY KEY, nom TEXT, prenom TEXT)")       
@@ -37,99 +35,65 @@ class DAO:
 
 
 class BaseDAO(Protocol):
-    def get_by_id(self, id) -> DAO: ...
+    def get_by_id(self, id) -> DAO: """Recherche un objet via son identifiant"""
 
-    def get_all(self) -> list[DAO]: ...
+        for objet in self.data:
+            
+            if hasattr(objet, "id") and objet.id == id:
+                return objet
 
-    def save(self, obj) -> int | None: ...
+            if hasattr(objet, "id_etudiant") and objet.id_etudiant == id:
+                return objet
 
-    def update(self, obj) -> int | None: ...
+            if hasattr(objet, "id_enseignant") and objet.id_enseignant == id:
+                return objet
 
-    def delete(self, obj) -> int | None: ...
+            if hasattr(objet, "id_promotion") and objet.id_promotion == id:
+                return objet
 
+            if hasattr(objet, "id_ue") and objet.id_ue == id:
+                return objet
+
+            if hasattr(objet, "id_cours") and objet.id_cours == id:
+                return objet
+
+            if hasattr(objet, "id_seance") and objet.id_seance == id:
+                return objet
+
+        return None
+
+    def get_all(self) -> list[DAO]:  """ Retourne tous les objets enregistrés."""
+        return self.data
+
+    def save(self, obj) -> None: """ Enrégistrer un objet dans la base de données. Si l'objet existe déjà, il est mis à jour"""
+        self.data.append(objet)
+        return objet
+
+    def delete(self, id) -> None: """Suprimme un objet de la base de données via son identifiant"""
+    objet = self.get_by_id(id)
+
+        if objet is not None:
+            self.data.remove(objet)
+            return True
+
+        return False
+;;
 
 class UserDAO(DAO):
     def __init__(
         self,
     ):
-        # Initialisation de la connexion à la base de données
-        super().__init__()
+        pass
 
-    def get_by_id(self, id: int) -> Optional[UserDTO]:
-        cursor = self.conn.cursor()
-        # Requete de récupération d'un utilisateur par son ID
-        cursor.execute("SELECT id, role, email, logedin FROM users WHERE id = ?", (id,))
-        id_user, role, email, logedin = cursor.fetchone()
+    def get_by_id(self, id) -> UserDTO: ...
 
-        if not id_user:
-            return None
+    def get_all(self) -> list[UserDTO]: ...
 
-        return UserDTO(id_user, role, email, logedin)
+    def save(self, UserDTO) -> None: ...
 
-    def get_all(self) -> List[UserDTO]:
-        cursor = self.conn.cursor()
-        # Requete de récupération de tous les utilisateurs
-        cursor.execute("SELECT * FROM users")
+    def delete(self, id: int) -> None: ...
 
-        return [UserDTO(r[0], r[1], r[2], r[3]) for r in cursor.fetchall()]
-
-    def save(self, user: UserDTO) -> int | None:
-        cursor = self.conn.cursor()
-        auto_id = (
-            user.id_user
-            if user.id_user
-            else (
-                randint(1, 100) + cursor.lastrowid
-                if cursor.lastrowid
-                else randint(1, 100)
-            )
-        )
-        cursor.execute(
-            "INSERT INTO users (id, role, email, logedin) VALUES (?, ?, ?, ?)",
-            (auto_id, user.role, user.email, user.logedin),
-        )
-        self.conn.commit()
-        return cursor.lastrowid
-
-    def update(self, user: UserDTO) -> int | None:
-        cursor = self.conn.cursor()
-        role, email, logedin, id = (
-            user.role,
-            user.email,
-            user.logedin,
-            user.id_user,
-        )
-        cursor.execute(
-            "UPDATE users SET role = ? , email = ? , logedin = ? WHERE id = ?",
-            (role, email, logedin, id),
-        )
-        self.conn.commit()
-        return cursor.lastrowid
-
-    def delete(self, user: UserDTO) -> int | None:
-        cursor = self.conn.cursor()
-        id = user.id_user
-        cursor.execute(
-            "DELETE FROM users WHERE id = ?",
-            (id,),
-        )
-        self.conn.commit()
-        return cursor.lastrowid
-
-    def get_by_email(self, user: UserDTO) -> Optional[UserDTO]:
-        cursor = self.conn.cursor()
-        email = user.email
-        cursor.execute(
-            "SELECT * FROM users WHERE email = ?",
-            (email,),
-        )
-        result = cursor.fetchone()
-        if result:
-            return UserDTO(result[0], result[1], result[2], result[3])
-        return None
-
-
-# Exercice 3
+    def get_by_email(self, email) -> UserDTO: ...
 
 
 class EtudiantDAO(DAO):
@@ -140,9 +104,9 @@ class EtudiantDAO(DAO):
 
     def get_all(self) -> list[EtudiantDTO]: ...
 
-    def save(self, UserDTO) -> int | None: ...
+    def save(self, UserDTO) -> None: ...
 
-    def delete(self, id: int) -> int | None: ...
+    def delete(self, id: int) -> None: ...
 
     def get_by_promotion(self, promotion_id) -> list[EtudiantDTO]: ...
 
@@ -155,9 +119,9 @@ class EnseignantDAO(DAO):
 
     def get_all(self) -> list[EnseignantDTO]: ...
 
-    def save(self, EnseignantDAO) -> int | None: ...
+    def save(self, EnseignantDAO) -> None: ...
 
-    def delete(self, id_enseignant) -> int | None: ...
+    def delete(self, id_enseignant) -> None: ...
 
     def get_by_ue(self, ue_id) -> list[EnseignantDTO]: ...
 
@@ -170,5 +134,5 @@ class PromotionDAO(DAO):
 class EventDAO(DAO):
     def __init__(
         self,
-    ) -> None:
+    ):
         pass
