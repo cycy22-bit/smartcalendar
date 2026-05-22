@@ -24,13 +24,12 @@ class DAO:
             "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, role TEXT, email TEXT, google_linked BOOLEAN)"
         )
 
-        # 2. Création de la table Etudiant
-        # 3. Création de la table Enseignant
-        # 4. Création de la table Promotion
-        # 5. Création de la table UniteEnseignement
-        # 6. Création de la table Cours
-        # 7. Création de la table Seance
-
+        cursor.execute("CREATE TABLE IF NOT EXISTS enseignants (id INTEGER PRIMARY KEY, nom TEXT, prenom TEXT)")       
+        cursor.execute("CREATE TABLE IF NOT EXISTS uniteEnseignement (id INTEGER PRIMARY KEY, code_ue TEXT,intitule TEXT, credits_ects INTEGER)")      
+        cursor.execute("CREATE TABLE IF NOT EXISTS promotion (id INTEGER PRIMARY KEY, nom_promo TEXT, annee_academique TEXT)")       
+        cursor.execute("CREATE TABLE IF NOT EXISTS seances (id INTEGER PRIMARY KEY, date_seance DATETIME, heure_debut TIME, heure_fin TIME, salle TEXT, est_synchronise BOOLEAN, id_cours INTEGER)")        # 7. Création de la table Seance
+        cursor.execute("CREATE TABLE IF NOT EXISTS etudiant(id INTEGER PRIMARY KEY, matricule TEXT, nom TEXT, prenom TEXT, email TEXT )")
+        cursor.execute("CREATE TABLE IF NOT EXISTS cours (id INTEGER PRIMARY KEY, intitule_cours TEXT, volume_horaire INTEGER, id_enseignant INTEGER FOREING KEY, id_ue INTEGER FOREING KEY )")
         # Confirmation des réquêtes dans la transaction
         self.conn.commit()
 
