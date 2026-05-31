@@ -308,5 +308,3 @@ class PromotionDAO(DAO):
 class EventDAO(DAO):
     def __init__(self):
         super().__init__()
-
-

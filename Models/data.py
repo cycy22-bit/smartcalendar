@@ -2,7 +2,8 @@ from dataclasses import dataclass
 from datetime import date, time
 from enum import Enum, auto
 
-from typing import List
+from typing_extensions import List
+
 
 class PromotionDTO:
     # Data Transfer Object for Promotion
@@ -13,6 +14,7 @@ class PromotionDTO:
 
         self.etudiants: List[EtudiantDTO] = []
         self.unites_enseignement: List[UniteEnseignementDTO] = []
+
 
 @dataclass
 class EtudiantDTO:
@@ -110,39 +112,17 @@ class SeanceDTO:
         self.salle = salle
         self.est_synchro = est_synchro
         self.cours_id = cours_id
-        self.type = type
+
 
 class UserDTO:
     def __init__(
         self,
         id_user: int,
-        email: str,
-        password: str,
         role: str,
-        google_link: str,
-
+        email: str,
+        logedin: bool,
     ):
         self.id_user = id_user
-        self.email = email
-        self.password = password
         self.role = role
-        self.google_link = google_link
-
-class NotificationDTO:
-    def __init__(
-        self,
-        id_notification: int,
-        type: str,
-        destinataire: list[str],
-        message: str,
-        date_envoi: date,
-    
-        
-    ):
-        self.id_notification = id_notification
-        self.type = type
-        self.destinataire = destinataire
-        self.message = message
-        self.date_envoi = date_envoi
-
-
+        self.email = email
+        self.logedin = logedin
