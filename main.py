@@ -10,84 +10,91 @@ from Views.calendrier_view import (
     SyncView,
 )
 
+# --- COMPOSANTS DE ROUTE DÉCLARATIFS ---
+
+
+@ft.component
+def HomeRoute():
+    def on_connexion_click(e):
+        ft.context.page.navigate("/login")
+        ft.context.page.update()
+
+    return ft.Container(
+        expand=True,
+        alignment=ft.Alignment.CENTER,
+        content=ft.Column(
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            controls=[
+                ft.Text("Bienvenue sur SmartCalendrier", size=30),
+                ft.Button(
+                    "Connexion",
+                    on_click=on_connexion_click,
+                ),
+            ],
+        ),
+    )
+
+
+@ft.component
+def LoginRoute():
+    return AuthView()
+
+
+@ft.component
+def DashboardRoute():
+    return AppLayout(DashboardView())
+
+
+@ft.component
+def CalendrierRoute():
+    return AppLayout(CalendarView())
+
+
+@ft.component
+def ImportRoute():
+    return AppLayout(ImportView())
+
+
+@ft.component
+def FiltresRoute():
+    return AppLayout(FilterView())
+
+
+@ft.component
+def SyncRoute():
+    return AppLayout(SyncView())
+
+
+# --- APPLICATION GLOBALE (Nécessaire pour le contexte du Router) ---
+
+
+@ft.component
+def App():
+    # Le Router vit désormais en toute sécurité à l'intérieur d'un composant @ft.component
+    return ft.Router(
+        manage_views=True,
+        routes=[
+            ft.Route(index=True, component=HomeRoute),
+            ft.Route(path="login", component=LoginRoute),
+            ft.Route(path="dashboard", component=DashboardRoute),
+            ft.Route(path="calendrier", component=CalendrierRoute),
+            ft.Route(path="import", component=ImportRoute),
+            ft.Route(path="filtres", component=FiltresRoute),
+            ft.Route(path="sync", component=SyncRoute),
+        ],
+    )
+
+
+# --- POINT D'ENTRÉE IMPÉRATIF ---
+
 
 async def main(page: ft.Page):
     page.title = "SmartCalendrier"
     page.theme_mode = ft.ThemeMode.LIGHT
-    # set window size width to 1000 and height to 700
     page.window.width = 1000
     page.window.height = 700
 
-    # ROUTAGE
-    def route_change(route):
-        page.views.clear()
-
-        if page.route == "/":
-            page.views.append(
-                ft.View(
-                    route="/",
-                    controls=[
-                        AppLayout(
-                            ft.Container(
-                                expand=True,
-                                alignment=ft.Alignment.CENTER,
-                                content=ft.Column(
-                                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                                    controls=[
-                                        ft.Text(
-                                            "Bienvenue sur SmartCalendrier", size=30
-                                        ),
-                                        ft.Button(
-                                            "Connexion",
-                                            on_click=lambda e: page.go("/login"),
-                                        ),
-                                    ],
-                                ),
-                            )
-                        )
-                    ],
-                )
-            )
-
-        elif page.route == "/login":
-            page.views.append(ft.View(route="/login", controls=[AuthView()]))
-
-        elif page.route == "/dashboard":
-            page.views.append(
-                ft.View(route="/dashboard", controls=[AppLayout(DashboardView())])
-            )
-
-        elif page.route == "/calendrier":
-            page.views.append(
-                ft.View(route="/calendrier", controls=[AppLayout(CalendarView())])
-            )
-
-        elif page.route == "/import":
-            page.views.append(
-                ft.View(route="/import", controls=[AppLayout(ImportView())])
-            )
-
-        elif page.route == "/filtres":
-            page.views.append(
-                ft.View(route="/filtres", controls=[AppLayout(FilterView())])
-            )
-
-        elif page.route == "/sync":
-            page.views.append(ft.View(route="/sync", controls=[AppLayout(SyncView())]))
-
-        page.update()
-
-    # NAVIGATION RETOUR
-    async def view_pop(view):
-        page.views.pop()
-        top_view = page.views[-1]
-        await page.push_route(top_view.route)
-
-    page.on_route_change = route_change
-    page.on_view_pop = view_pop
-
-    # DÉMARRAGE
-    await page.push_route("/")
+    page.render(App)
 
 
 if __name__ == "__main__":
