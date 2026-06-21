@@ -1,3 +1,3 @@
-from .data import EnseignantDTO, EtudiantDTO, UserDTO
+from .data import EnseignantDTO, EtudiantDTO, EventDTO, UserDTO
 
-__all__ = ["EnseignantDTO", "EtudiantDTO", "UserDTO"]
+__all__ = ["EnseignantDTO", "EtudiantDTO", "UserDTO", "EventDTO"]

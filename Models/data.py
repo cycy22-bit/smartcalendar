@@ -1,8 +1,7 @@
 from dataclasses import dataclass
 from datetime import date, time
 from enum import Enum, auto
-
-from typing_extensions import List
+from typing import List
 
 
 class PromotionDTO:
@@ -82,7 +81,7 @@ class CoursDTO:
         self.ue_id = ue_id
         self.enseignant_id = enseignant_id
 
-        self.seances: List[SeanceDTO] = []
+        self.seances: List[EventDTO] = []
 
 
 class TypeSeance(Enum):
@@ -93,7 +92,7 @@ class TypeSeance(Enum):
     AUTRE_EVENEMENT = auto()
 
 
-class SeanceDTO:
+class EventDTO:
     def __init__(
         self,
         id_seance: int,
@@ -103,7 +102,7 @@ class SeanceDTO:
         salle: str,
         est_synchro: bool,
         cours_id: int,
-        type: TypeSeance,
+        types: TypeSeance,
     ):
         self.id_seance = id_seance
         self.date = date_seance
@@ -112,6 +111,7 @@ class SeanceDTO:
         self.salle = salle
         self.est_synchro = est_synchro
         self.cours_id = cours_id
+        self.types = types
 
 
 class UserDTO:
