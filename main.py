@@ -10,82 +10,86 @@ from Views.calendrier_view import (
     SyncView,
 )
 
-# --- COMPOSANTS DE ROUTE DÉCLARATIFS ---
+# --- WRAPPERS DYNAMIQUES POUR LE ROUTER ---
+# Ces fonctions forcent Flet à recréer une nouvelle instance mutable de vos classes POO à chaque accès.
 
 
 @ft.component
 def HomeRoute():
-    def on_connexion_click(e):
-        ft.context.page.navigate("/login")
-        ft.context.page.update()
-
-    return ft.Container(
-        expand=True,
-        alignment=ft.Alignment.CENTER,
-        content=ft.Column(
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            controls=[
-                ft.Text("Bienvenue sur SmartCalendrier", size=30),
-                ft.Button(
-                    "Connexion",
-                    on_click=on_connexion_click,
-                ),
-            ],
-        ),
+    return ft.View(
+        route="/",
+        controls=[
+            AppLayout(
+                ft.Container(
+                    expand=True,
+                    alignment=ft.Alignment.CENTER,
+                    content=ft.Column(
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        controls=[
+                            ft.Text("Bienvenue sur SmartCalendrier", size=30),
+                            ft.Button(
+                                "Connexion",
+                                on_click=lambda e: ft.context.page.navigate("/login"),
+                            ),
+                        ],
+                    ),
+                )
+            )
+        ],
     )
 
 
 @ft.component
 def LoginRoute():
-    return AuthView()
+    return ft.View(route="/login", controls=[AuthView()])
 
 
 @ft.component
 def DashboardRoute():
-    return AppLayout(DashboardView())
+    return ft.View(route="/dashboard", controls=[AppLayout(DashboardView())])
 
 
 @ft.component
 def CalendrierRoute():
-    return AppLayout(CalendarView())
+    # Recrée dynamiquement CalendarView() pour qu'il soit modifiable
+    return ft.View(route="/calendrier", controls=[AppLayout(CalendarView())])
 
 
 @ft.component
 def ImportRoute():
-    return AppLayout(ImportView())
+    return ft.View(route="/import", controls=[AppLayout(ImportView())])
 
 
 @ft.component
-def FiltresRoute():
-    return AppLayout(FilterView())
+def FilterRoute():
+    return ft.View(route="/filtres", controls=[AppLayout(FilterView())])
 
 
 @ft.component
 def SyncRoute():
-    return AppLayout(SyncView())
+    return ft.View(route="/sync", controls=[AppLayout(SyncView())])
 
 
-# --- APPLICATION GLOBALE (Nécessaire pour le contexte du Router) ---
+# --- APPLICATION GLOBALE ---
 
 
 @ft.component
 def App():
-    # Le Router vit désormais en toute sécurité à l'intérieur d'un composant @ft.component
     return ft.Router(
         manage_views=True,
         routes=[
-            ft.Route(index=True, component=HomeRoute),
-            ft.Route(path="login", component=LoginRoute),
-            ft.Route(path="dashboard", component=DashboardRoute),
-            ft.Route(path="calendrier", component=CalendrierRoute),
-            ft.Route(path="import", component=ImportRoute),
-            ft.Route(path="filtres", component=FiltresRoute),
-            ft.Route(path="sync", component=SyncRoute),
+            ft.Route(path="/", component=HomeRoute),
+            ft.Route(path="/login", component=LoginRoute),
+            ft.Route(path="/dashboard", component=DashboardRoute),
+            ft.Route(path="/calendrier", component=CalendrierRoute),
+            ft.Route(path="/import", component=ImportRoute),
+            ft.Route(path="/filtres", component=FilterRoute),
+            ft.Route(path="/sync", component=SyncRoute),
         ],
     )
 
 
-# --- POINT D'ENTRÉE IMPÉRATIF ---
+# --- POINT D'ENTRÉE ---
 
 
 async def main(page: ft.Page):
@@ -94,7 +98,8 @@ async def main(page: ft.Page):
     page.window.width = 1000
     page.window.height = 700
 
-    page.render(App)
+    # Rendu initial de l'application via les vues gérées par le routeur
+    page.render_views(App)
 
 
 if __name__ == "__main__":
