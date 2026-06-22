@@ -4,13 +4,10 @@
 # Avec Python, les class Interfaces peuvent être implémentées comme des classes abstraites
 # heritant de Protocol
 import sqlite3
-from random import randint
-from typing import List, Optional, Protocol
+from typing import Protocol
 
 from Models import EnseignantDTO, EtudiantDTO, UserDTO
 
-
-# Exercice 2
 class DAO:
     def __init__(self, db_path: str = ":memory:"):
         self.conn = sqlite3.connect(db_path, check_same_thread=False)
@@ -19,157 +16,295 @@ class DAO:
     def _setup_db(self):
         cursor = self.conn.cursor()
 
-        # Réquêtes de création lors de l'initialisation des tables si elles n'existent pas
-        # 1. Création de la table Users sur base de la classe UserDTO
 
-        cursor.execute(
-            "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, role TEXT, email TEXT, logedin BOOLEAN)"
-        )
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                role TEXT,
+                email TEXT,
+                google_linked BOOLEAN
+            )
+        """)
 
-        # 2. Création de la table Etudiant
-        # 3. Création de la table Enseignant
-        # 4. Création de la table Promotion
-        # 5. Création de la table UniteEnseignement
-        # 6. Création de la table Cours
-        # 7. Création de la table Seance
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS enseignants (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nom TEXT,
+                prenom TEXT
+            )
+        """)
 
-        # Confirmation des réquêtes dans la transaction
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS uniteEnseignement (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                code_ue TEXT,
+                intitule TEXT,
+                credits_ects INTEGER
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS promotion (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nom_promo TEXT,
+                annee_academique TEXT
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS etudiant (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                matricule TEXT,
+                nom TEXT,
+                prenom TEXT,
+                email TEXT
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS cours (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                intitule_cours TEXT,
+                volume_horaire INTEGER,
+                id_enseignant INTEGER,
+                id_ue INTEGER,
+                FOREIGN KEY (id_enseignant) REFERENCES enseignants(id),
+                FOREIGN KEY (id_ue) REFERENCES uniteEnseignement(id)
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS seances (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                date_seance DATETIME,
+                heure_debut TIME,
+                heure_fin TIME,
+                salle TEXT,
+                est_synchronise BOOLEAN,
+                id_cours INTEGER,
+                FOREIGN KEY (id_cours) REFERENCES cours(id)
+            )
+        """)
         self.conn.commit()
 
 
-class BaseDAO(Protocol):
-    def get_by_id(self, id) -> DAO: ...
+class BaseDAO:
+    def __init__(self):
+        self.data = []
 
-    def get_all(self) -> list[DAO]: ...
+    def get_by_id(self, id: int) -> None:
+        """Recherche un objet via son identifiant."""
 
-    def save(self, obj) -> int | None: ...
+        for objet in self.data:
+            if hasattr(objet, "id") and objet.id == id:
+                return objet
 
-    def update(self, obj) -> int | None: ...
+            if hasattr(objet, "id_etudiant") and objet.id_etudiant == id:
+                return objet
 
-    def delete(self, obj) -> int | None: ...
+            if hasattr(objet, "id_enseignant") and objet.id_enseignant == id:
+                return objet
+
+            if hasattr(objet, "id_promotion") and objet.id_promotion == id:
+                return objet
+
+            if hasattr(objet, "id_ue") and objet.id_ue == id:
+                return objet
+
+            if hasattr(objet, "id_cours") and objet.id_cours == id:
+                return objet
+
+            if hasattr(objet, "id_seance") and objet.id_seance == id:
+                return objet
+
+        return None
+
+    def get_all(self) -> list:
+        """Retourne tous les objets enregistrés."""
+        return self.data
+
+    def save(self, objet) -> None:
+        """
+        Enregistre un objet dans la liste.
+        Si l'objet existe déjà, il peut être mis à jour plus tard.
+        """
+        self.data.append(objet)
+        return objet
+
+    def delete(self, id: int) -> bool:
+        """Supprime un objet via son identifiant."""
+
+        objet = self.get_by_id(id)
+
+        if objet is not None:
+            self.data.remove(objet)
+            return True
+
+        return False
 
 
 class UserDAO(DAO):
-    def __init__(
-        self,
-    ):
-        # Initialisation de la connexion à la base de données
+    def __init__(self):
         super().__init__()
 
-    def get_by_id(self, id: int) -> Optional[UserDTO]:
+    def get_by_id(self, id) -> UserDTO:
         cursor = self.conn.cursor()
-        # Requete de récupération d'un utilisateur par son ID
-        cursor.execute("SELECT id, role, email, logedin FROM users WHERE id = ?", (id,))
-        id_user, role, email, logedin = cursor.fetchone()
+        cursor.execute("SELECT * FROM users WHERE id = ?", (id,))
+        row = cursor.fetchone()
 
-        if not id_user:
+        if row is None:
             return None
 
-        return UserDTO(id_user, role, email, logedin)
+        return UserDTO(*row)
 
-    def get_all(self) -> List[UserDTO]:
+    def get_all(self) -> list[UserDTO]:
         cursor = self.conn.cursor()
-        # Requete de récupération de tous les utilisateurs
         cursor.execute("SELECT * FROM users")
+        rows = cursor.fetchall()
 
-        return [UserDTO(r[0], r[1], r[2], r[3]) for r in cursor.fetchall()]
+        return [UserDTO(*row) for row in rows]
 
-    def save(self, user: UserDTO) -> int | None:
+    def save(self, UserDTO) -> None:
         cursor = self.conn.cursor()
-        auto_id = (
-            user.id_user
-            if user.id_user
-            else (
-                randint(1, 100) + cursor.lastrowid
-                if cursor.lastrowid
-                else randint(1, 100)
-            )
-        )
+
         cursor.execute(
-            "INSERT INTO users (id, role, email, logedin) VALUES (?, ?, ?, ?)",
-            (auto_id, user.role, user.email, user.logedin),
+            """
+            INSERT INTO users (role, email, google_linked)
+            VALUES (?, ?, ?)
+            """,
+            (UserDTO.role, UserDTO.email, UserDTO.google_linked)
         )
+
         self.conn.commit()
-        return cursor.lastrowid
 
-    def update(self, user: UserDTO) -> int | None:
+    def delete(self, id: int) -> None:
         cursor = self.conn.cursor()
-        role, email, logedin, id = (
-            user.role,
-            user.email,
-            user.logedin,
-            user.id_user,
-        )
-        cursor.execute(
-            "UPDATE users SET role = ? , email = ? , logedin = ? WHERE id = ?",
-            (role, email, logedin, id),
-        )
+        cursor.execute("DELETE FROM users WHERE id = ?", (id,))
         self.conn.commit()
-        return cursor.lastrowid
 
-    def delete(self, user: UserDTO) -> int | None:
+    def get_by_email(self, email) -> UserDTO:
         cursor = self.conn.cursor()
-        id = user.id_user
-        cursor.execute(
-            "DELETE FROM users WHERE id = ?",
-            (id,),
-        )
-        self.conn.commit()
-        return cursor.lastrowid
+        cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
+        row = cursor.fetchone()
 
-    def get_by_email(self, user: UserDTO) -> Optional[UserDTO]:
-        cursor = self.conn.cursor()
-        email = user.email
-        cursor.execute(
-            "SELECT * FROM users WHERE email = ?",
-            (email,),
-        )
-        result = cursor.fetchone()
-        if result:
-            return UserDTO(result[0], result[1], result[2], result[3])
-        return None
+        if row is None:
+            return None
 
-
-# Exercice 3
+        return UserDTO(*row)
 
 
 class EtudiantDAO(DAO):
     def __init__(self):
-        pass
+        super().__init__()
 
-    def get_by_id(self, id) -> EtudiantDTO: ...
+    def get_by_id(self, id) -> EtudiantDTO:
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT * FROM etudiant WHERE id = ?", (id,))
+        row = cursor.fetchone()
 
-    def get_all(self) -> list[EtudiantDTO]: ...
+        if row is None:
+            return None
 
-    def save(self, UserDTO) -> int | None: ...
+        return EtudiantDTO(*row)
 
-    def delete(self, id: int) -> int | None: ...
+    def get_all(self) -> list[EtudiantDTO]:
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT * FROM etudiant")
+        rows = cursor.fetchall()
 
-    def get_by_promotion(self, promotion_id) -> list[EtudiantDTO]: ...
+        return [EtudiantDTO(*row) for row in rows]
+
+    def save(self, UserDTO) -> None:
+        cursor = self.conn.cursor()
+
+        cursor.execute(
+            """
+            INSERT INTO etudiant (matricule, nom, prenom, email)
+            VALUES (?, ?, ?, ?)
+            """,
+            (UserDTO.matricule, UserDTO.nom, UserDTO.prenom, UserDTO.email)
+        )
+
+        self.conn.commit()
+
+    def delete(self, id: int) -> None:
+        cursor = self.conn.cursor()
+        cursor.execute("DELETE FROM etudiant WHERE id = ?", (id,))
+        self.conn.commit()
+
+    def get_by_promotion(self, promotion_id) -> list[EtudiantDTO]:
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "SELECT * FROM etudiant WHERE promotion_id = ?",
+            (promotion_id,)
+        )
+        rows = cursor.fetchall()
+
+        return [EtudiantDTO(*row) for row in rows]
 
 
 class EnseignantDAO(DAO):
     def __init__(self):
-        pass
+        super().__init__()
 
-    def get_by_id(self, id) -> EnseignantDTO: ...
+    def get_by_id(self, id) -> EnseignantDTO:
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT * FROM enseignants WHERE id = ?", (id,))
+        row = cursor.fetchone()
 
-    def get_all(self) -> list[EnseignantDTO]: ...
+        if row is None:
+            return None
 
-    def save(self, EnseignantDAO) -> int | None: ...
+        return EnseignantDTO(*row)
 
-    def delete(self, id_enseignant) -> int | None: ...
+    def get_all(self) -> list[EnseignantDTO]:
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT * FROM enseignants")
+        rows = cursor.fetchall()
 
-    def get_by_ue(self, ue_id) -> list[EnseignantDTO]: ...
+        return [EnseignantDTO(*row) for row in rows]
+
+    def save(self, EnseignantDAO) -> None:
+        cursor = self.conn.cursor()
+
+        cursor.execute(
+            """
+            INSERT INTO enseignants (nom, prenom)
+            VALUES (?, ?)
+            """,
+            (EnseignantDAO.nom, EnseignantDAO.prenom)
+        )
+
+        self.conn.commit()
+
+    def delete(self, id_enseignant) -> None:
+        cursor = self.conn.cursor()
+        cursor.execute("DELETE FROM enseignants WHERE id = ?", (id_enseignant,))
+        self.conn.commit()
+
+    def get_by_ue(self, ue_id) -> list[EnseignantDTO]:
+        cursor = self.conn.cursor()
+
+        cursor.execute(
+            """
+            SELECT enseignants.*
+            FROM enseignants
+            INNER JOIN cours ON enseignants.id = cours.id_enseignant
+            WHERE cours.id_ue = ?
+            """,
+            (ue_id,)
+        )
+
+        rows = cursor.fetchall()
+
+        return [EnseignantDTO(*row) for row in rows]
 
 
 class PromotionDAO(DAO):
     def __init__(self) -> None:
-        pass
+        super().__init__()
 
 
 class EventDAO(DAO):
-    def __init__(
-        self,
-    ) -> None:
-        pass
+    def __init__(self):
+        super().__init__()
