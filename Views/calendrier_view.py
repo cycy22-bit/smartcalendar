@@ -242,10 +242,10 @@ def ImportView():
 
     # 3. Fonction asynchrone pour ouvrir l'explorateur natif au clic
     async def pick_file_click(e):
-        # LA BONNE MÉTHODE EST pick_files(), PAS pick_files_async()
-        await file_picker_instance.pick_files(
-            allow_multiple=False, allowed_extensions=["csv", "xlsx"]
-        )
+        if file_picker_instance:
+            await file_picker_instance.pick_files(
+                allow_multiple=False, allowed_extensions=["csv", "xlsx"]
+            )
 
     # 4. Rattachement sécurisé du composant invisible à l'overlay de la page
     page = ft.context.page
@@ -292,9 +292,10 @@ state_filters = {"TP": True, "TD": True, "CM": True}
 def FilterView():
     global state_filters
 
-    def on_checkbox_change(e: ft.ControlEvent):
+    def on_checkbox_change(e: ft.ControlEvent):  # TODO
         global state_filters
-        state_filters[e.control.label] = e.control.value
+        # Filtre les valeurs affichees en fonction de la valeur choisie par l'utilisateur au checkbox
+        state_filters[e.control.key] = e.control.value
         ft.context.page.update()
 
     # --- FILTRAGE DÉCLARATIF DES ÉVÉNEMENTS ---

@@ -19,21 +19,19 @@ def HomeRoute():
     return ft.View(
         route="/",
         controls=[
-            AppLayout(
-                ft.Container(
-                    expand=True,
-                    alignment=ft.Alignment.CENTER,
-                    content=ft.Column(
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                        controls=[
-                            ft.Text("Bienvenue sur SmartCalendrier", size=30),
-                            ft.Button(
-                                "Connexion",
-                                on_click=lambda e: ft.context.page.navigate("/login"),
-                            ),
-                        ],
-                    ),
-                )
+            ft.Container(
+                expand=True,
+                alignment=ft.Alignment.CENTER,
+                content=ft.Column(
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    controls=[
+                        ft.Text("Bienvenue sur SmartCalendrier", size=30),
+                        ft.Button(
+                            "Connexion",
+                            on_click=lambda e: ft.context.page.navigate("/login"),
+                        ),
+                    ],
+                ),
             )
         ],
     )
