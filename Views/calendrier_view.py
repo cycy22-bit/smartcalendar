@@ -3,7 +3,7 @@ import time
 from typing import Any
 
 import flet as ft
-from typing_extensions import cast
+from typing import cast
 
 from Services.agenda_services import AgendaService
 from Views.event_card import EventCard

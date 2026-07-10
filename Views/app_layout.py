@@ -1,6 +1,5 @@
 import flet as ft
-from typing_extensions import cast
-
+from typing import cast
 # class SidebarComponent:
 #     def build(self):
 #         return ft.NavigationRail(
